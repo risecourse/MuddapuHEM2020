@@ -1,4 +1,5 @@
-# MATLAB temp
+# MATLAB
+*.mat
 *.asv
 
 # Prerequisites
