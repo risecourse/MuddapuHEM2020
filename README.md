@@ -1,4 +1,4 @@
-# MuddapuHEM2020
+# Background
  Muddapu and Chakravarthy, 2020. Multi-Scale  Computational Model of Excitotoxic Loss of Dopaminergic Cells  in Parkinson’s Disease
 
 This is the readme for the models associated with the paper:
@@ -10,8 +10,13 @@ doi:10.1101/2020.02.20.957704.
 
 This archive was contributed by Vignayanandam R. Muddapu.
 
-How to run the model
+# Usage
+This is a MATLAB model. To run, launch MATLAB and then:
 
-run RUN_HEM_model.m
+1. Set the current/working directory to your MuddapuHEM2020 repository folder
+2. At the MATLAB command line, enter: RUN_HEM_model
+3. Wait a few seconds (or minutes, if your computer doesn't have a GPU) for the model to run
+4. The code will print out a file name and some example commands for loading and plotting results
 
-See into RUN_HEM_model.m file to reproduce the different results from the paper
+The authors' original README file also had the following comment:
+"See into RUN_HEM_model.m file to reproduce the different results from the paper"
