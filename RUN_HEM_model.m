@@ -98,11 +98,11 @@ for i=1:numel(peren)
                                         parsave_CL(filename,deda,dDA,kid,simtime,srnd);
                                         %                         parsave_CL_cell(filename,out_cell,simtime,srnd);
                                         %                         parsave_CL_pattern(filename,out_cell,simtime,srnd);
-                                        disp(sprintf(['The file results are in: ',filename, '.mat']))
-                                        disp(sprintf(['\nYou can load them in with the command:']))
+                                        disp(sprintf(['%%The file results are in: ',filename, '.mat']))
+                                        disp(sprintf(['\n%%You can load them in with the command:']))
                                         disp(['results=load(''',filename,''');'])
-                                        disp(sprintf(['\nYou could plot them with the command:\nfigure;plot(results.dDA,results.deda)']))
-                                        disp(sprintf('\nI don''t know what these variables mean yet, having not read the paper...'))
+                                        disp(sprintf(['\n%%You could plot them with the command:\nfigure;plot(results.dDA,results.deda)']))
+                                        disp(sprintf('\n%%I don''t know what these variables mean yet, having not read the paper...'))
                                         %                         plot_save_long_CL;
                                     end
                                 end
