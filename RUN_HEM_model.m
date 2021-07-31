@@ -16,9 +16,22 @@
 
 %%
 clc;clear;close all;
+% plotting parameters
+skip_plots = 12;    % the higher the number, the fewer the cells whose
+                    % membrane potential traces are plotted. And keep in
+                    % mind that we only recorded the ongoing voltages for
+                    % a row of cells of each type. If there is any
+                    % topological pattern of activity in this model, we are
+                    % likely missing it. You may want to look at a random
+                    % sampling of cells instead of the top row, if it seems
+                    % like they could be different.
 
 % Duration of simulation
-dur=2000;
+dur=2000; % ms
+
+% time step of simulation
+dt=0.1; %ms
+
 
 % Recording simulation time
 time=clock;curdate=time(3);curmonth=time(2);
@@ -34,7 +47,7 @@ scfa=0.00001;% scaling factor
 Aapopthr=[0.5];
 
 nR=1; %0-autoreceptors 1-without autoreceptors
-camtthr=[0.02];
+camtthr=[0.02]; % Perhaps this is "calcium concentration threshold after which mitochondria-induced apoptosis gets initiated"
 
 numtrial=1;
 if gpuDeviceCount("available")>0
@@ -79,23 +92,33 @@ for i=1:numel(peren)
                             for n2=1:numel(ccb_dose)
                                 for n1=1:numel(cbd_dose)
                                     for n=1:numel(asb_dose)
+                                        % create a struct that stores
+                                        % parameter values for easy
+                                        % documentation inside the saved
+                                        % data *.mat files:
+                                        params.ApoptosisThresh = Aapopthr(k);
+                                        params.Weight_STN_SNc = wstsn(j);
+                                        params.Under_energy_def = peren(i);
+                                        params.CaThresh_MT_Apop = camtthr(l);
+                                        params.CellLossLevel_Therapy = cl(m);
+                                        params.ApopBlock_Therapy_Dose = asb_dose(n);
                                         
                                         wwstsn=deci2str(wstsn(j));
                                         peren1=deci2str(peren(i));
                                         apopthr=deci2str(Aapopthr(k));
+                                        
                                         camtthr1=deci2str(camtthr(l));
                                         cl1=deci2str(cl(m));
                                         asb_dose1=deci2str(asb_dose(n));
-                                        %                         filename=strcat('HybMod_SSG_GDA_stnlatRS_DAr0-5--15e-6__nRRP10_sncstn1_Rstnsnc5-5_',num2str(durr),'msec_',num2str(curdate),'_',num2str(curmonth));
-                                        %                         filename=strcat('H_MAp-1_V0_0-1_t',num2str(apopthr),'_CA1_PD',num2str(peren1),'_allr_rA0-1_lamR10e-6-5e-6_Fexp4-87_DA1_2e-5_Rstnsnc',num2str(wstsn),'_std1_scfa',num2str(scfa1),'_1_',num2str(durr),'sec_',num2str(curdate),'_',num2str(curmonth));
+
                                         filename=strcat('H_t',num2str(apopthr),'_camtt',num2str(camtthr1),'_PD',num2str(peren1),'_Rstnsnc',num2str(wwstsn),'_std1_scfa',num2str(scfa1),'_CL',num2str(cl1),'%_',num2str(numtrial),'_',num2str(durr),'sec');
-                                        %                         filename=strcat('H_t',num2str(apopthr),'_camtt',num2str(camtthr1),'_PD',num2str(peren1),'_Rstnsnc',num2str(wwstsn),'_std1_scfa',num2str(scfa1),'_1_',num2str(durr),'sec');
+
                                         
                                         %disp(filename)
-                                        [deda,dDA,kid,simtime,srnd]=MAIN_HEM_model(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
+                                        [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC]=MAIN_HEM_model(dt,dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
                                         %                         [out_cell,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_cell(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
                                         %                         [deda,dDA,kid,clp,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_pattern(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
-                                        parsave_CL(filename,deda,dDA,kid,simtime,srnd);
+                                        parsave_CL(filename,deda,dDA,kid,simtime,srnd,params);
                                         %                         parsave_CL_cell(filename,out_cell,simtime,srnd);
                                         %                         parsave_CL_pattern(filename,out_cell,simtime,srnd);
                                         disp(sprintf(['%%The file results are in: ',filename, '.mat']))
@@ -104,7 +127,41 @@ for i=1:numel(peren)
                                         disp(sprintf(['\n%%You could plot them with the command:\nfigure;plot(results.dDA,results.deda)']))
                                         disp(sprintf('\n%%I don''t know what these variables mean yet, having not read the paper...'))
                                         %                         plot_save_long_CL;
-                                    end
+                                        h=figure();
+                                        for q=1:skip_plots:size(VtrajectorySTN,2)
+                                            plot(dt:dt:dur, VtrajectorySTN(:,q))
+                                            hold on
+                                        end 
+                                        xlabel('Time (ms)')
+                                        ylabel('Membrane Potential (mV)')
+                                        title({'STN Cells',filename},Interpreter='None')
+                                        h2=figure();
+                                        for q=1:skip_plots*skip_plots:size(VtrajectoryGPE,2)
+                                            plot(dt:dt:dur, VtrajectoryGPE(:,q))
+                                            hold on % hold on means, keep the current lines 
+                                                    % on the figure and add the newest plot line on top
+                                                    % You can also just
+                                                    % plot one, or
+                                                    % introduce subplots or
+                                                    % new figures in the
+                                                    % for loop so that each
+                                                    % cell's v is plotted
+                                                    % separately
+                                        end 
+                                        xlabel('Time (ms)')
+                                        ylabel('Membrane Potential (mV)')
+                                        title({'GPE Cells',filename},Interpreter='None')
+                                        h3=figure();
+                                        for q=1:size(VtrajectorySNC,2)
+                                            plot(dt:dt:dur, VtrajectorySNC(:,q))
+                                            hold on
+                                        end 
+                                        xlabel('Time (ms)')
+                                        ylabel('Membrane Potential (mV)')
+                                        title({'SNC Cells',filename},Interpreter='None')   
+                                        load train
+                                        sound(y,Fs)
+                                   end
                                 end
                             end
                         end

@@ -1,5 +1,5 @@
 %% Hybrid network model of excitotoxicity
-function [deda,dDA,kid,simtime,srnd]=MAIN_HEM_model(durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
+function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
 %% CREDITS
 % Created by
 % Vignayanandam R. Muddapu (Ph.D. scholar)
@@ -35,7 +35,6 @@ tic;
 
 % time1=clock;
 % Time parameters & Random seeding
-dt=0.1;
 taustn=dt;
 taugpe=dt;
 tspan=dt:dt:durr;
@@ -110,6 +109,7 @@ Cgpe = 1; %(microF)
 %STN
 Vstn = -62.5.*(rand(Mstn,Nstn)-0.5.*ones(Mstn,Nstn));
 Ustn = ((-15)-(-5)).*rand(Mstn,Nstn) + (-5);
+VtrajectorySTN = -62.5.*ones(Ttime,Nstn); 
 % Vstn = -62.5.*ones(Mstn,Nstn);
 % Ustn = zeros(size(Vstn));
 % Vstns=Vstn;Ustns=Ustn;
@@ -718,6 +718,7 @@ for k = 1:Ttime
     
     Istnsnc=1*(B.*I_nmda_snc + I_ampa_snc);
     
+    %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%% Stimulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     Ibg=0;
@@ -879,7 +880,7 @@ for k = 1:Ttime
     dAMP_dATP = -1.00000+Q_adk./2.00000+-(0.500000.*(power(uADP, 1.0./2)))+Q_adk.*(ANP./(ATP.*(power(uADP, 1.0./2))));
     
     eta_op=eta_op_max-beta_op_asyn.*(((ASYNA^4)./((ASYNA^4)+(Kasyn^4))));
-    
+    %%
     %%%%%%%%%%%%%%%%%%%%%% Differential equations %%%%%%%%%%%%%%%%%%%%%%%%%
     
     V_sncnxt = V_snc + (((F.*vol_cyt)./(C_sp.*A_pmu)).*(J_Na+J_K+2.00000.*J_Ca+Iext-Igabasnc+(scfa*Istnsnc))).*dt;
@@ -942,6 +943,7 @@ for k = 1:Ttime
     %     end
     
     V_snc=V_sncnxt;m_cal=m_calnxt;m_kdr=m_kdrnxt;m_na=m_nanxt;
+    VtrajectorySNC(k,:) = V_snc(1,:);
     h_na=h_nanxt;O_hcn=O_hcnnxt;Calb=Calbnxt;
     Cam=Camnxt;y_nk=y_nknxt;y_pc=y_pcnxt;
     K_i=K_inxt;Na_i=Na_inxt;Ca_i=Ca_inxt;
@@ -972,7 +974,7 @@ for k = 1:Ttime
     %     inds=find(V_snc_array(k) >= -20 && V_snc_array(k) > V_snc_array(k-1) && V_snc_array(k) > V_snc_array(k+1));
     %     inds=find(V_snc <=80 & V_snc >=-20);
     %     snc_firings=[snc_firings; k+0*inds,inds+0*inds];
-    
+    %%
     %----------------------------------------STN-----------------------------------------%
     %---------------------------Input from stn to stn(laterals)--------------------------%
     
@@ -1014,7 +1016,9 @@ for k = 1:Ttime
     
     Vstn = Vstn_nxt;
     Ustn = Ustn_nxt;
+    VtrajectorySTN(k,:) = Vstn(1,:);
     
+    %%
     %----------------------------------------GPe-----------------------------------------%
     %--------------------- Input from stn to gpe----------------------------------%
     % psp variable
@@ -1058,7 +1062,8 @@ for k = 1:Ttime
     
     Vgpe = Vgpe_nxt;
     Ugpe = Ugpe_nxt;
-    
+    VtrajectoryGPE(k,:) = Vgpe(1,:);
+
     % Killing based on apoptosis threshold
     indsap=find(apop>apopthr);
     indsapp=[indsapp indsap'];
@@ -1117,7 +1122,7 @@ for k = 1:Ttime
         
         samp_start=samp_start+(stt/dt);
         count=1;
-        disp(k*dt)
+        disp(['Current time is ',num2str(k*dt),' ms'])
     end
     
     
