@@ -1,5 +1,5 @@
 %% Hybrid network model of excitotoxicity
-function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
+function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
 %% CREDITS
 % Created by
 % Vignayanandam R. Muddapu (Ph.D. scholar)
@@ -167,6 +167,9 @@ xmin=-55;xmax=-45;
 V_sncinit = xmin+rand(Msnc,Nsnc)*(xmax-xmin);
 % V_sncinit = -49.42.*ones(Msnc,Nsnc);
 Ca_iinit = 0.000188.*ones(Msnc,Nsnc);
+
+Ca_trajectorySNC = 0.000188.*ones(1,Nsnc);
+
 Na_iinit = 4.6876.*ones(Msnc,Nsnc);
 K_iinit = 126.05893.*ones(Msnc,Nsnc);
 Calbinit = 0.0026.*ones(Msnc,Nsnc);
@@ -947,6 +950,7 @@ for k = 1:Ttime
     h_na=h_nanxt;O_hcn=O_hcnnxt;Calb=Calbnxt;
     Cam=Camnxt;y_nk=y_nknxt;y_pc=y_pcnxt;
     K_i=K_inxt;Na_i=Na_inxt;Ca_i=Ca_inxt;
+    Ca_trajectorySNC(k,:) = Ca_i(1,:); % keep track of the internal calcium concentration
     Ca_er=Ca_ernxt;Ca_mt=Ca_mtnxt;
     cda=cdanxt;vda=vdanxt;eda=edanxt;ATPused=ATPusednxt;
     cal=calnxt;cai_cal=cai_calnxt;cal_act=cal_actnxt;
