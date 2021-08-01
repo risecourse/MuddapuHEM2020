@@ -33,6 +33,10 @@ function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC
 
 tic;
 
+STNcells2track = [2, 4; 1, 8; 4, 3;];
+%GPEcells2track = ...
+%SCNcells2track = ...
+
 % time1=clock;
 % Time parameters & Random seeding
 taustn=dt;
@@ -951,6 +955,7 @@ for k = 1:Ttime
     Cam=Camnxt;y_nk=y_nknxt;y_pc=y_pcnxt;
     K_i=K_inxt;Na_i=Na_inxt;Ca_i=Ca_inxt;
     Ca_trajectorySNC(k,:) = Ca_i(1,:); % keep track of the internal calcium concentration
+
     Ca_er=Ca_ernxt;Ca_mt=Ca_mtnxt;
     cda=cdanxt;vda=vdanxt;eda=edanxt;ATPused=ATPusednxt;
     cal=calnxt;cai_cal=cai_calnxt;cal_act=cal_actnxt;
@@ -1019,8 +1024,11 @@ for k = 1:Ttime
     stncurr_spk(inds) = ones(size(inds));
     
     Vstn = Vstn_nxt;
-    Ustn = Ustn_nxt;
-    VtrajectorySTN(k,:) = Vstn(1,:);
+    Ustn = Ustn_nxt;    
+    
+    for ncell = 1:size(STNcells2track,1)      
+        VtrajectorySTN(k,ncell,1) = Vstn(STNcells2track(ncell,1),STNcells2track(ncell,2));
+    end
     
     %%
     %----------------------------------------GPe-----------------------------------------%
