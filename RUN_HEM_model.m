@@ -61,7 +61,7 @@ cl=[25];
 
 % Glutamate inhibition therapy
 gion=0;
-gi_dose=[0.3];
+gi_dose=[0.3]; %all are supposed to be at .3, putting it at 0 so there is no effectiveness
 
 % Dopamine restoration therapy
 dron=0;
@@ -115,7 +115,7 @@ for i=1:numel(peren)
 
                                         
                                         %disp(filename)
-                                        [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC]=MAIN_HEM_model(dt,dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
+                                        [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC]=MAIN_HEM_model(dt,dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
                                         %                         [out_cell,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_cell(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
                                         %                         [deda,dDA,kid,clp,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_pattern(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
                                         parsave_CL(filename,deda,dDA,kid,simtime,srnd,params);
@@ -222,21 +222,21 @@ for i=1:numel(peren)
                                         % makes sense if you wanted to use
                                         % this equation:
                                         % 
-                                        % t = 0:1800; % assuming stress
+                                        t = 0:1800; % assuming stress
                                         % response to a single spike
                                         % follows a time course lasting
                                         % around 200 ms, our kernel will be
                                         % around 10x that length
                                         %
-                                        % stress_max = 5; % this is an
+                                        stress_max = 5; % this is an
                                         % arbitrary example; I haven't
                                         % looked at the stress measure in
                                         % this code to find its scale. Same
                                         % with the time courses below:
-                                        % trise = 10; % ms
-                                        % tfall = 1010; % ms
+                                        trise = 10; % ms
+                                        tfall = 1010; % ms
                                         %
-                                        % stress_traj = stress_max*(-exp(-t/trise)-.2 + 1.2*exp  (-t/tfall));
+                                        stress_traj = stress_max*(-exp(-t/trise)-.2 + 1.2*exp  (-t/tfall));
                                         %
                                         % Then we convolve the
                                         % stereotypical stress response
@@ -245,12 +245,12 @@ for i=1:numel(peren)
                                         % this site for help with the
                                         % convolution:
                                         % https://www.mathworks.com/help/matlab/ref/conv.html
-                                        % stress = ...
+                                        stress = conv(spktimes,stress_traj);
                                         %
                                         % And we can shift it so that the
                                         % effects take place after the
                                         % spike time:
-                                        % stress = [zeros(1,round(length(stress_traj)/2)) stress(1:end-round(length(stress_traj)/2))];
+                                        stress = [zeros(1,round(length(stress_traj)/2)) stress(1:end-round(length(stress_traj)/2))];
                                         %
                                         % OR take the full convolution
                                         % instead of the same size and only
@@ -267,8 +267,8 @@ for i=1:numel(peren)
                                         %     end
                                         % end
                                         
-                                        load train
-                                        sound(y,Fs)
+                                        %load train
+                                        %sound(y,Fs)
                                    end
                                 end
                             end
@@ -285,6 +285,27 @@ end
 % clear;clc;
 % matlabpool close
 toc
+threshold_vec_m = zeros(Ttime, 8);
+threshold_vec_er = zeros(Ttime, 8);
+threshold_vec_in = zeros(Ttime, 8);
+% for i = 1:5
+%     threshold_vec(CatrajectorySNC(k, i)>0.00215)=1;
+% end
+
+
+for k = 1: Ttime
+    for i = 1:8
+        if mt_catrajectorySNC(k,i) > 0.0215
+            threshold_vec_m(k,i) = 1;
+        end
+        if er_catrajectorySNC(k,i) > 0.00215
+            threshold_vec_er(k,i) = 1;
+        end
+        if Ca_trajectorySNC(k,i) > .02
+            threshold_vec_in(k,i) = 1;
+        end
+    end
+end
 
 
 function spktimes = getspikes(v,threshold)
@@ -292,3 +313,7 @@ function spktimes = getspikes(v,threshold)
     s = find(v(1:end-1)<=threshold & v(2:end)>threshold);
     spktimes(s) = 1;
 end
+
+
+
+

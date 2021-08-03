@@ -1,5 +1,5 @@
 %% Hybrid network model of excitotoxicity
-function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
+function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
 %% CREDITS
 % Created by
 % Vignayanandam R. Muddapu (Ph.D. scholar)
@@ -110,6 +110,8 @@ Cgpe = 1; %(microF)
 Vstn = -62.5.*(rand(Mstn,Nstn)-0.5.*ones(Mstn,Nstn));
 Ustn = ((-15)-(-5)).*rand(Mstn,Nstn) + (-5);
 VtrajectorySTN = -62.5.*ones(Ttime,Nstn); 
+mCatrajectorySNC = zeros(Ttime, 5);
+erCatrajectorySNC = zeros(Ttime, 5);
 % Vstn = -62.5.*ones(Mstn,Nstn);
 % Ustn = zeros(size(Vstn));
 % Vstns=Vstn;Ustns=Ustn;
@@ -610,13 +612,13 @@ for k = 1:Ttime
         end
     end
     
-    %     ATP=2.4*ones(Msnc,Nsnc);
+        ATP=2.4*ones(Msnc,Nsnc);
     
-    %     if k==sst
-    %         indsapp=idxx(1:ssp);
-    %         ssp=ssp+1;
-    %         sst=sst+(200/dt);
-    %     end
+        if k==sst
+            indsapp=idxx(1:ssp);
+            ssp=ssp+1;
+            sst=sst+(200/dt);
+        end
     
     V_snc(indsapp) = -80.*ones(size(indsapp));
     apop(indsapp)=zeros(size(indsapp));
@@ -902,6 +904,11 @@ for k = 1:Ttime
     ATPusednxt = ATPused+(-ATPused+(1.00000./(F.*vol_cyt)).*(I_nk+I_pmca)).*dt;%ATPused
     Ca_ernxt = Ca_er + ((beta_er./rho_er).*(J_pump-(J_ch+J_leak))).*dt;
     Ca_mtnxt = Ca_mt + ((beta_mt/rho_mt).*(J_in-J_out)).*dt;
+    mCatrajectorySNC(k, 1) = Ca_mtnxt(randi([1 8],1),randi([1 8],1));
+    mCatrajectorySNC(k, 2) = Ca_mtnxt(randi([1 8],1),randi([1 8],1));
+    mCatrajectorySNC(k, 3) = Ca_mtnxt(randi([1 8],1),randi([1 8],1));
+    mCatrajectorySNC(k, 4) = Ca_mtnxt(randi([1 8],1),randi([1 8],1));
+    mCatrajectorySNC(k, 5) = Ca_mtnxt(randi([1 8],1),randi([1 8],1));
     cdanxt = cda+(jsynt + jdat - jvmat - jida).*dt;%cda
     vdanxt = vda+(jvmat - jrel).*dt;%vda
     edanxt = eda+(jrel - jdat - jeda).*dt;%eda
@@ -952,6 +959,13 @@ for k = 1:Ttime
     K_i=K_inxt;Na_i=Na_inxt;Ca_i=Ca_inxt;
     Ca_trajectorySNC(k,:) = Ca_i(1,:); % keep track of the internal calcium concentration
     Ca_er=Ca_ernxt;Ca_mt=Ca_mtnxt;
+    er_catrajectorySNC(k,:) = Ca_er(1,:);
+    mt_catrajectorySNC(k,:) = Ca_mt(1,:);
+    erCatrajectorySNC(k, 1) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+    erCatrajectorySNC(k, 2) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+    erCatrajectorySNC(k, 3) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+    erCatrajectorySNC(k, 4) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+    erCatrajectorySNC(k, 5) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
     cda=cdanxt;vda=vdanxt;eda=edanxt;ATPused=ATPusednxt;
     cal=calnxt;cai_cal=cai_calnxt;cal_act=cal_actnxt;
     casp12=casp12nxt;cal_act_casp12=cal_act_casp12nxt;casp12_act=casp12_actnxt;
@@ -1020,11 +1034,17 @@ for k = 1:Ttime
     
     Vstn = Vstn_nxt;
     Ustn = Ustn_nxt;
-    VtrajectorySTN(k,:) = Vstn(1,:);
+    %for adding stress, it might need to be cumulative.
+    
+    STNcells2track = [2, 4; 1, 8; 4, 3;];
+    for ncell = 1:size(STNcells2track,1)      
+        VtrajectorySTN(k,ncell,1) = Vstn(STNcells2track(ncell,1),STNcells2track(ncell,2));
+    end
+
     
     %%
     %----------------------------------------GPe-----------------------------------------%
-    %--------------------- Input from stn to gpe----------------------------------%
+    %------------- -------- Input from stn to gpe----------------------------------%
     % psp variable
     h_nmdagpe = (1-lam_nmda).* h_nmdagpe + lam_nmda.*stncurr_spk;
     h_ampagpe = (1-lam_ampa).* h_ampagpe + lam_ampa.*stncurr_spk;
