@@ -27,7 +27,7 @@ skip_plots = 12;    % the higher the number, the fewer the cells whose
                     % like they could be different.
 
 % Duration of simulation
-dur=2000; % ms
+dur=20000; % ms
 
 % time step of simulation
 dt=0.1; %ms
@@ -292,20 +292,19 @@ threshold_vec_in = zeros(Ttime, 8);
 %     threshold_vec(CatrajectorySNC(k, i)>0.00215)=1;
 % end
 
-
-for k = 1: Ttime
-    for i = 1:8
-        if mt_catrajectorySNC(k,i) > 0.0215
-            threshold_vec_m(k,i) = 1;
+for k=1:Ttime
+    for t=1:8
+        if mt_catrajectorySNC(k,t) > .0215
+            threshold_vec_m(k,t) = 1;
         end
-        if er_catrajectorySNC(k,i) > 0.00215
-            threshold_vec_er(k,i) = 1;
-        end
-        if Ca_trajectorySNC(k,i) > .02
-            threshold_vec_in(k,i) = 1;
+        if er_catrajectorySNC(k,t) > .00215
+            threshold_vec_m(k,t) = 1;
         end
     end
 end
+%threshold_vec_m(mt_catrajectorySNC(:) > 0.0215)=1;
+%threshold_vec_er(er_catrajectorySNC(:) > 0.00215)=1;
+threshold_vec_in(Ca_trajectorySNC(:) > 0.02)=1;
 
 
 function spktimes = getspikes(v,threshold)

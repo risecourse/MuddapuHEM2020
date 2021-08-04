@@ -530,7 +530,7 @@ lam=lmin+rand(8,8)*(lmax-lmin);
 
 %%%SELF-KILLING
 idxx = randsample(1:Psnc,Psnc);
-sst=2000/dt;
+sst=durr/dt;
 ssp=1;
 indsapp=[];
 
@@ -961,11 +961,11 @@ for k = 1:Ttime
     Ca_er=Ca_ernxt;Ca_mt=Ca_mtnxt;
     er_catrajectorySNC(k,:) = Ca_er(1,:);
     mt_catrajectorySNC(k,:) = Ca_mt(1,:);
-    erCatrajectorySNC(k, 1) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
-    erCatrajectorySNC(k, 2) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
-    erCatrajectorySNC(k, 3) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
-    erCatrajectorySNC(k, 4) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
-    erCatrajectorySNC(k, 5) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+%     erCatrajectorySNC(k, 1) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+%     erCatrajectorySNC(k, 2) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+%     erCatrajectorySNC(k, 3) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+%     erCatrajectorySNC(k, 4) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
+%     erCatrajectorySNC(k, 5) = Ca_ernxt(randi([1 8],1),randi([1 8],1));
     cda=cdanxt;vda=vdanxt;eda=edanxt;ATPused=ATPusednxt;
     cal=calnxt;cai_cal=cai_calnxt;cal_act=cal_actnxt;
     casp12=casp12nxt;cal_act_casp12=cal_act_casp12nxt;casp12_act=casp12_actnxt;
