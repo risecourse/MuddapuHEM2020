@@ -112,6 +112,8 @@ Ustn = ((-15)-(-5)).*rand(Mstn,Nstn) + (-5);
 VtrajectorySTN = -62.5.*ones(Ttime,Nstn); 
 mCatrajectorySNC = zeros(Ttime, 5);
 erCatrajectorySNC = zeros(Ttime, 5);
+er_catrajectorySNC = zeros(Ttime, 8);
+mt_catrajectorySNC = zeros(Ttime, 8);
 % Vstn = -62.5.*ones(Mstn,Nstn);
 % Ustn = zeros(size(Vstn));
 % Vstns=Vstn;Ustns=Ustn;

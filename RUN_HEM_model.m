@@ -27,7 +27,7 @@ skip_plots = 12;    % the higher the number, the fewer the cells whose
                     % like they could be different.
 
 % Duration of simulation
-dur=20000; % ms
+dur=200; % ms
 
 % time step of simulation
 dt=0.1; %ms
@@ -194,7 +194,7 @@ for i=1:numel(peren)
                                         % list of times at which this cell
                                         % spiked 'spktimes' if useful for
                                         % plotting or other analyses:
-                                        spikes = getspikes(VtrajectorySNC(:,3),-30);
+                                        spikes = getspikes(VtrajectorySNC(:,1),-30);
                                         timevec = dt:dt:dur;
                                         spktimes=timevec(spikes==1);
                                         
@@ -236,7 +236,8 @@ for i=1:numel(peren)
                                         trise = 10; % ms
                                         tfall = 1010; % ms
                                         %
-                                        stress_traj = stress_max*(-exp(-t/trise)-.2 + 1.2*exp  (-t/tfall));
+                                        stress_traj_mt = mt_catrajectorySNC;
+                                        stress_traj_er = er_catrajectorySNC;
                                         %
                                         % Then we convolve the
                                         % stereotypical stress response
@@ -245,12 +246,23 @@ for i=1:numel(peren)
                                         % this site for help with the
                                         % convolution:
                                         % https://www.mathworks.com/help/matlab/ref/conv.html
-                                        stress = conv(spktimes,stress_traj);
+                                        stress_mt = conv(VtrajectorySNC(:,1),spktimes);
+                                        %stress_er = conv(spktimes,stress_traj_er);
                                         %
+                                        z = 2;
+                                        alpha = 0.05;
+                                        w = linspace(1,201,2000);
+                                        w = w.';
+                                        polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
+                                        
+                                        stressData = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        
+                                        mdl = fitlm(stressData,'ResponseVar','CaLevelMt');
+                                        
                                         % And we can shift it so that the
                                         % effects take place after the
                                         % spike time:
-                                        stress = [zeros(1,round(length(stress_traj)/2)) stress(1:end-round(length(stress_traj)/2))];
+                                        %stress_mt = [zeros(1,round(length(stress_traj_mt)/2)) stress_mt(1:end-round(length(stress_traj_mt)/2))];
                                         %
                                         % OR take the full convolution
                                         % instead of the same size and only
@@ -298,7 +310,7 @@ for k=1:Ttime
             threshold_vec_m(k,t) = 1;
         end
         if er_catrajectorySNC(k,t) > .00215
-            threshold_vec_m(k,t) = 1;
+            threshold_vec_er(k,t) = 1;
         end
     end
 end
