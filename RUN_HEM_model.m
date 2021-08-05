@@ -129,7 +129,7 @@ for i=1:numel(peren)
                                         % print the cell voltages:
                                         h=figure();
                                         for q=1:skip_plots:size(VtrajectorySTN,2)
-                                            plot(dt:dt:dur, VtrajectorySTN(:,q))
+                                            plot(dt:dt:dur, VtrajectorySTN(:,q,1))
                                             hold on
                                         end 
                                         xlabel('Time (ms)')
@@ -319,10 +319,10 @@ end
 threshold_vec_in(Ca_trajectorySNC(:) > 0.02)=1;
 
 
-function spktimes = getspikes(v,threshold)
-    spktimes = zeros(size(v));
+function spikes = getspikes(v,threshold)
+    spikes = zeros(size(v));
     s = find(v(1:end-1)<=threshold & v(2:end)>threshold);
-    spktimes(s) = 1;
+    spikes(s) = 1;
 end
 
 
