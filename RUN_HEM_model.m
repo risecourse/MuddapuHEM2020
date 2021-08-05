@@ -255,9 +255,62 @@ for i=1:numel(peren)
                                         w = w.';
                                         polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
                                         
-                                        stressData = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
                                         
-                                        mdl = fitlm(stressData,'ResponseVar','CaLevelMt');
+                                        stressData = table(w,VtrajectorySNC(:,1),mt_catrajectorySNC(:,1));
+                                        stressDataLinear = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        
+                                        %x = [w,Var3];
+
+                                        
+                                        mdl = fitlm(stressDataLinear,'Var1~w+Var3');
+                                        x = table(w,VtrajectorySNC(:,1));
+                                        y = mt_catrajectorySNC(:,1);
+                                        Mdl = fitrnet(x,y);
+                                        p = 2;
+                                        bmdl = bayeslm(p, 'ModelType', 'conjugate');
+                                        Mdl = bayeslm(p,'ModelType','conjugate','Mu',w,'V',VtrajectorySNC(:,1),...
+                                            'VarNames',["time" "membrane potential" "calcium level"]);
+
+%                                         Mdl1 = estimate(bmdl,x,y);
+
+%                                         Mdl = fitrsvm(x,y,'OptimizeHyperparameters','auto',...
+%                                         'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName',...
+%                                         'expected-improvement-plus'));
+%                                         Mdl = fitrsvm(x,y);
+
+
+                                        
+                                        %beta0 = randn(nVars,1);
+                                        
+                                        %double sigmoid - 0.5*( M1/(1+exp(-k1(x-a))) + M2/(1+exp(-k2(x-b)))) Where M1 and M2 are the asymptotics (the plateaus), a and b are the x values for the centers of the slopes and k1 and k2 are connected to the steepness of the curves.
+                                        modelfun = @(x) exp(-1 * (x{:,2}));
+                                        z = modelfun(x);
+%                                         modelfun = @(b,x)b(1)/(1+exp(-b(2)*(b(3)-x(1,:))))
+%                                         modelfun = @(b,x)(-.5)*(b(1)/(1+exp(-b(2)*(x(1,:)-b(3))))+...
+%                                             b(4)/(1+exp(-b(5)*(x(2,:)-b(6)))));
+                                        beta0 = [0 0 200 0 0 1740];  
+                                        mdl1 = fitnlm(stressData,modelfun,beta0);
+                                        SSECF = @(b) sum((i(:) - modelfun(b,x)).^2);
+                                        [b_estd, SSE1] = fminsearch(SSECF, beta0);
+                                        i_fit1 = modelfun(b_estd,stressData);
+                                        
+%                                         
+%   
+%  
+%                                         
+% %                                         load reaction;
+%                                         ds = dataset({independent,xn(2,:),xn(3,:)},{dependent,yn});
+                                        i_fcn = @(b,x) b(1).*x(:,1).^b(2) + b(3).* x(:,2).^b(4) + b(5);
+                                        x = [w(:)  VtrajectorySNC(:,1)];
+                                        b0 = rand(4,1);
+                                        SSECF = @(b) sum((i(:) - i_fcn(b,x)).^2);                           % Sum-Squared-Error Cost Function
+                                        [b_estd, SSE] = fminsearch(SSECF, b0);                              % Estimate Parameters
+                                        i_fit = i_fcn(b_estd,x);  
+                                        
+
+
+
+
                                         
                                         % And we can shift it so that the
                                         % effects take place after the
