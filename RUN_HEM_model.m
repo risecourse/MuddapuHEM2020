@@ -27,7 +27,7 @@ skip_plots = 12;    % the higher the number, the fewer the cells whose
                     % like they could be different.
 
 % Duration of simulation
-dur=20000; % ms
+dur=50000; % ms
 
 % time step of simulation
 dt=0.1; %ms
@@ -194,7 +194,7 @@ for i=1:numel(peren)
                                         % list of times at which this cell
                                         % spiked 'spktimes' if useful for
                                         % plotting or other analyses:
-                                        spikes = getspikes(VtrajectorySNC(:,3),-30);
+                                        spikes = getspikes(VtrajectorySNC(:,1),-30);
                                         timevec = dt:dt:dur;
                                         spktimes=timevec(spikes==1);
                                         
@@ -236,7 +236,8 @@ for i=1:numel(peren)
                                         trise = 10; % ms
                                         tfall = 1010; % ms
                                         %
-                                        stress_traj = stress_max*(-exp(-t/trise)-.2 + 1.2*exp  (-t/tfall));
+                                        stress_traj_mt = mt_catrajectorySNC;
+                                        stress_traj_er = er_catrajectorySNC;
                                         %
                                         % Then we convolve the
                                         % stereotypical stress response
@@ -245,12 +246,91 @@ for i=1:numel(peren)
                                         % this site for help with the
                                         % convolution:
                                         % https://www.mathworks.com/help/matlab/ref/conv.html
-                                        stress = conv(spktimes,stress_traj);
+                                        stress_mt = conv(VtrajectorySNC(:,1),spktimes);
+                                        %stress_er = conv(spktimes,stress_traj_er);
                                         %
+                                        z = 2;
+                                        alpha = 0.05;
+                                        w = linspace(1,50001,500000);
+                                        w = w.';
+%                                         polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
+                                        
+                                        
+                                        stressData = table(w,VtrajectorySNC(:,1),mt_catrajectorySNC(:,1));
+                                        stressDataLinear = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        
+                                        %x = [w,Var3];
+
+                                        
+                                        mdl = fitlm(stressDataLinear,'Var1~w+Var3');
+                                        %%%stepwise regression%%%
+                                        stepWiseMdl = stepwiselm(stressDataLinear,'Var1~w+Var3');
+                                        %%%ridge fit%%%
+                                        X1 = [w VtrajectorySNC(:,1)];
+                                        d = x2fx(X1,'interaction');
+                                        d(:,1) = [];
+                                        k = 0:1e-5:5e-3;
+                                        b = ridge(mt_catrajectorySNC(:,1),d,k);
+                                        
+%                                         n = length(mt_catrajectorySNC(:,1));
+%                                         rng('default');
+%                                         a = cvpartition(n,'HoldOut',0.3);
+%                                         c_train = training(a,1);
+%                                         c_test = ~c_train;
+%                                         k_1 = 5;
+%                                         b_1 = ridge(mt_catrajectorySNC(:,1)(c_train),X1(c_train,:),k,0);
+                                      
+
+                                        
+
+
+                                        
+                                        
+                                        x = table(w,VtrajectorySNC(:,1));
+                                        y = mt_catrajectorySNC(:,1);
+                                        Mdl = fitrnet(x,y);
+
+
+                                        
+                                        %beta0 = randn(nVars,1);
+                                        
+                                        %double sigmoid - 0.5*( M1/(1+exp(-k1(x-a))) + M2/(1+exp(-k2(x-b)))) Where M1 and M2 are the asymptotics (the plateaus), a and b are the x values for the centers of the slopes and k1 and k2 are connected to the steepness of the curves.
+                                        modelfun = @(b,x) b(1).*x{:,1}.^b(2) ...
+                                             + b(3).* x{:,2}.^b(4) + b(5);
+                                        
+%                                         modelfun = @(b,x)b(1)/(1+exp(-b(2)*(b(3)-x(1,:))))
+%                                         modelfun = @(b,x)(-.5)*(b(1)/(1+exp(-b(2)*(x(1,:)-b(3))))+...
+%                                             b(4)/(1+exp(-b(5)*(x(2,:)-b(6)))));
+                                        MaxFunEvals = 50;
+                                        beta0 = [0 0 0 0 0];  
+%                                         mdl1 = fitnlm(stressData,modelfun,beta0);
+                                        SSECF = @(b) sum((i(:) - modelfun(b,x)).^2);
+                                        [b_estd, SSE1] = fminsearch(SSECF, beta0);
+                                        i_fit1 = modelfun(b_estd,stressData);
+                                        
+%                                         
+%   
+%  
+%                                         
+% %                                         load reaction;
+%                                         ds = dataset({independent,xn(2,:),xn(3,:)},{dependent,yn});
+%                                         i_fcn = @(b,x) b(1).*x(:,1).^b(2) ...
+%                                             + b(3).* x(:,2).^b(4) + b(5);
+%                                         x = [w(:)  VtrajectorySNC(:,1)];
+%                                         b0 = rand(4,1);
+%                                         SSECF = @(b) sum((i(:) - i_fcn(b,x)).^2);                           % Sum-Squared-Error Cost Function
+%                                         [b_estd, SSE] = fminsearch(SSECF, b0);                              % Estimate Parameters
+%                                         i_fit = i_fcn(b_estd,x);  
+                                        
+
+
+
+
+                                        
                                         % And we can shift it so that the
                                         % effects take place after the
                                         % spike time:
-                                        stress = [zeros(1,round(length(stress_traj)/2)) stress(1:end-round(length(stress_traj)/2))];
+                                        %stress_mt = [zeros(1,round(length(stress_traj_mt)/2)) stress_mt(1:end-round(length(stress_traj_mt)/2))];
                                         %
                                         % OR take the full convolution
                                         % instead of the same size and only
@@ -298,7 +378,7 @@ for k=1:Ttime
             threshold_vec_m(k,t) = 1;
         end
         if er_catrajectorySNC(k,t) > .00215
-            threshold_vec_m(k,t) = 1;
+            threshold_vec_er(k,t) = 1;
         end
     end
 end
