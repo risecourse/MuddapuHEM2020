@@ -394,7 +394,8 @@ Sig_mts=0;%0.0001;
 PTP_mit=1;
 
 % Energy Metabolism
-GLCe=1;%mM
+% GLCe=ones(Ttime);%mM
+GLCe = .47;
 Vmax_hk = 2.5/1000;%mM/ms
 Km_ATP_hk = 0.5;%mM
 KI_F6P = 0.068;%mM
@@ -900,6 +901,9 @@ for k = 1:Ttime
     K_inxt = K_i + (J_K).*dt;
     Calbnxt = Calb + (-J_calb).*dt;
     Camnxt = Cam + (-J_cam).*dt;
+%     if k > 1
+%         GLCe = GLCe(k-1) + 
+%     end
     m_calnxt = m_cal + ((1.00000./(1.00000+exp(-(V_snc+15.0000)./7.00000))-m_cal)./(7.68000.*exp(-(power((V_snc+65.0000)./17.3300, 2.00000)))+0.723100)).*dt;
     m_nanxt = m_na + (A_mna.*exp(za_mna.*VD).*(1.00000-m_na)-B_mna.*exp(-zb_mna.*VD).*m_na).*dt;
     h_nanxt = h_na + (A_hna.*exp(za_hna.*VD).*(1.00000-h_na)-B_hna.*exp(-zb_hna.*VD).*h_na).*dt;

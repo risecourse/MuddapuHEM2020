@@ -27,7 +27,7 @@ skip_plots = 12;    % the higher the number, the fewer the cells whose
                     % like they could be different.
 
 % Duration of simulation
-dur=200; % ms
+dur=50000; % ms
 
 % time step of simulation
 dt=0.1; %ms
@@ -251,9 +251,9 @@ for i=1:numel(peren)
                                         %
                                         z = 2;
                                         alpha = 0.05;
-                                        w = linspace(1,201,2000);
+                                        w = linspace(1,50001,500000);
                                         w = w.';
-                                        polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
+%                                         polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
                                         
                                         
                                         stressData = table(w,VtrajectorySNC(:,1),mt_catrajectorySNC(:,1));
@@ -263,33 +263,47 @@ for i=1:numel(peren)
 
                                         
                                         mdl = fitlm(stressDataLinear,'Var1~w+Var3');
+                                        %%%stepwise regression%%%
+                                        stepWiseMdl = stepwiselm(stressDataLinear,'Var1~w+Var3');
+                                        %%%ridge fit%%%
+                                        X1 = [w VtrajectorySNC(:,1)];
+                                        d = x2fx(X1,'interaction');
+                                        d(:,1) = [];
+                                        k = 0:1e-5:5e-3;
+                                        b = ridge(mt_catrajectorySNC(:,1),d,k);
+                                        
+%                                         n = length(mt_catrajectorySNC(:,1));
+%                                         rng('default');
+%                                         a = cvpartition(n,'HoldOut',0.3);
+%                                         c_train = training(a,1);
+%                                         c_test = ~c_train;
+%                                         k_1 = 5;
+%                                         b_1 = ridge(mt_catrajectorySNC(:,1)(c_train),X1(c_train,:),k,0);
+                                      
+
+                                        
+
+
+                                        
+                                        
                                         x = table(w,VtrajectorySNC(:,1));
                                         y = mt_catrajectorySNC(:,1);
                                         Mdl = fitrnet(x,y);
-                                        p = 2;
-                                        bmdl = bayeslm(p, 'ModelType', 'conjugate');
-                                        Mdl = bayeslm(p,'ModelType','conjugate','Mu',w,'V',VtrajectorySNC(:,1),...
-                                            'VarNames',["time" "membrane potential" "calcium level"]);
-
-%                                         Mdl1 = estimate(bmdl,x,y);
-
-%                                         Mdl = fitrsvm(x,y,'OptimizeHyperparameters','auto',...
-%                                         'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName',...
-%                                         'expected-improvement-plus'));
-%                                         Mdl = fitrsvm(x,y);
 
 
                                         
                                         %beta0 = randn(nVars,1);
                                         
                                         %double sigmoid - 0.5*( M1/(1+exp(-k1(x-a))) + M2/(1+exp(-k2(x-b)))) Where M1 and M2 are the asymptotics (the plateaus), a and b are the x values for the centers of the slopes and k1 and k2 are connected to the steepness of the curves.
-                                        modelfun = @(x) exp(-1 * (x{:,2}));
-                                        z = modelfun(x);
+                                        modelfun = @(b,x) b(1).*x{:,1}.^b(2) ...
+                                             + b(3).* x{:,2}.^b(4) + b(5);
+                                        
 %                                         modelfun = @(b,x)b(1)/(1+exp(-b(2)*(b(3)-x(1,:))))
 %                                         modelfun = @(b,x)(-.5)*(b(1)/(1+exp(-b(2)*(x(1,:)-b(3))))+...
 %                                             b(4)/(1+exp(-b(5)*(x(2,:)-b(6)))));
-                                        beta0 = [0 0 200 0 0 1740];  
-                                        mdl1 = fitnlm(stressData,modelfun,beta0);
+                                        MaxFunEvals = 50;
+                                        beta0 = [0 0 0 0 0];  
+%                                         mdl1 = fitnlm(stressData,modelfun,beta0);
                                         SSECF = @(b) sum((i(:) - modelfun(b,x)).^2);
                                         [b_estd, SSE1] = fminsearch(SSECF, beta0);
                                         i_fit1 = modelfun(b_estd,stressData);
@@ -300,12 +314,13 @@ for i=1:numel(peren)
 %                                         
 % %                                         load reaction;
 %                                         ds = dataset({independent,xn(2,:),xn(3,:)},{dependent,yn});
-                                        i_fcn = @(b,x) b(1).*x(:,1).^b(2) + b(3).* x(:,2).^b(4) + b(5);
-                                        x = [w(:)  VtrajectorySNC(:,1)];
-                                        b0 = rand(4,1);
-                                        SSECF = @(b) sum((i(:) - i_fcn(b,x)).^2);                           % Sum-Squared-Error Cost Function
-                                        [b_estd, SSE] = fminsearch(SSECF, b0);                              % Estimate Parameters
-                                        i_fit = i_fcn(b_estd,x);  
+%                                         i_fcn = @(b,x) b(1).*x(:,1).^b(2) ...
+%                                             + b(3).* x(:,2).^b(4) + b(5);
+%                                         x = [w(:)  VtrajectorySNC(:,1)];
+%                                         b0 = rand(4,1);
+%                                         SSECF = @(b) sum((i(:) - i_fcn(b,x)).^2);                           % Sum-Squared-Error Cost Function
+%                                         [b_estd, SSE] = fminsearch(SSECF, b0);                              % Estimate Parameters
+%                                         i_fit = i_fcn(b_estd,x);  
                                         
 
 
