@@ -27,7 +27,7 @@ skip_plots = 12;    % the higher the number, the fewer the cells whose
                     % like they could be different.
 
 % Duration of simulation
-dur=50000; % ms
+dur=5000; % ms
 
 % time step of simulation
 dt=0.1; %ms
@@ -251,22 +251,56 @@ for i=1:numel(peren)
                                         %
                                         z = 2;
                                         alpha = 0.05;
-                                        w = linspace(1,50001,500000);
+                                        w = linspace(1,5001,50000);
                                         w = w.';
 %                                         polytool(w/10,mt_catrajectorySNC(:,1),z,alpha);
                                         
                                         
                                         stressData = table(w,VtrajectorySNC(:,1),mt_catrajectorySNC(:,1));
-                                        stressDataLinear = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        stressDataLinear_mt = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        stressDataLinear_er = table(er_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
                                         
                                         %x = [w,Var3];
 
                                         
-                                        mdl = fitlm(stressDataLinear,'Var1~w+Var3');
+                                        %mdl = fitlm(stressDataLinear,'Var1~w+Var3');
                                         %%%stepwise regression%%%
-                                        stepWiseMdl = stepwiselm(stressDataLinear,'Var1~w+Var3');
-                                        %%%ridge fit%%%
+                                        stepWiseMdl_mt = stepwiselm(stressDataLinear_mt,'Var1~w+Var3');
+                                        stepWiseMdl_er = stepwiselm(stressDataLinear_er,'Var1~w+Var3');
+                                        
+                                        %%%prediction inputs%%%
                                         X1 = [w VtrajectorySNC(:,1)];
+                                        X2 = [w VtrajectorySTN(:,1)];
+                                        X3 = [w VtrajectoryGPE(:,1)];
+                                        
+                                        pred_mt_SNC = predict(stepWiseMdl_mt, X1);
+                                        pred_mt_STN = predict(stepWiseMdl_mt, X2);
+                                        pred_mt_GPE = predict(stepWiseMdl_mt, X3);
+                                        
+                                        pred_er_SNC = predict(stepWiseMdl_er, X1);
+                                        pred_er_STN = predict(stepWiseMdl_er, X2);
+                                        pred_er_GPE = predict(stepWiseMdl_er, X3);
+                                        
+                                        figure;plot(pred_mt_SNC)
+                                        title('Predicted Calcium levels in SNC Mitochondria')
+                                        
+                                        figure;plot(pred_mt_STN)
+                                        title('Predicted Calcium levels in STN Mitochondria')
+                                        
+                                        
+                                        figure;plot(pred_mt_GPE)
+                                        title('Predicted Calcium levels in GPE Mitochondria')
+                                        
+                                        figure;plot(pred_er_SNC)
+                                        title('Predicted Calcium levels in SNC Endoplasmic Reticulum')
+                                        
+                                        figure;plot(pred_er_STN)
+                                        title('Predicted Calcium levels in STN Endoplasmic Reticulum')
+                                        
+                                        figure;plot(pred_er_GPE)
+                                        title('Predicted Calcium levels in GPE Endoplasmic Reticulum')
+                                        
+                                        %%%ridge fit%%%
                                         d = x2fx(X1,'interaction');
                                         d(:,1) = [];
                                         k = 0:1e-5:5e-3;
