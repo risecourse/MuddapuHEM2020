@@ -61,23 +61,23 @@ cl=[25];
 
 % Glutamate inhibition therapy
 gion=0;
-gi_dose=[0.3]; %all are supposed to be at .3, putting it at 0 so there is no effectiveness
+gi_dose=[0]; %all are supposed to be at .3, putting it at 0 so there is no effectiveness
 
 % Dopamine restoration therapy
 dron=0;
-dr_dose=[0.3];
+dr_dose=[0];
 
 % Calcium channel blockers therapy
 ccbon=0;
-ccb_dose=[0.3];
+ccb_dose=[0];
 
 % Calcium-binding protein therapy
 cbdon=0;
-cbd_dose=[0.3];
+cbd_dose=[0];
 
 % Apoptotic signal blocker therapy
 asbon=0;
-asb_dose=[0.3];
+asb_dose=[0];
 
 scfa1=deci2str(scfa);
 durr=deci2str(dur/1000);
@@ -257,20 +257,63 @@ for i=1:numel(peren)
                                         
                                         
                                         stressData = table(w,VtrajectorySNC(:,1),mt_catrajectorySNC(:,1));
-                                        stressDataLinear = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        stressDataLinear_mt = table(mt_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
+                                        stressDataLinear_er = table(er_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
                                         
                                         %x = [w,Var3];
 
                                         
-                                        mdl = fitlm(stressDataLinear,'Var1~w+Var3');
-                                        %%%stepwise regression%%%
-                                        stepWiseMdl = stepwiselm(stressDataLinear,'Var1~w+Var3');
+%                                         mdl = fitlm(stressDataLinear,'Var1~w+Var3');
+                                        %%%quadratic regression%%%
+                                        stepWiseMdl_mt = fitlm([w VtrajectorySNC(:,1)],mt_catrajectorySNC(:,1),'quadratic');
+                                        stepWiseMdl_er = fitlm([w VtrajectorySNC(:,1)],er_catrajectorySNC(:,1),'interactions');
+                                        %%%stepwise predicitons%%%
+                                        XSNC = [w VtrajectorySNC(:,1)];
+                                        XSTN = [w VtrajectorySTN(:,1)];
+                                        XGPE = [w VtrajectoryGPE(:,1)];
+                                        
+                                        pred_mt_SNC = predict(stepWiseMdl_mt, XSNC);
+                                        pred_mt_STN = predict(stepWiseMdl_mt, XSTN);
+                                        pred_mt_GPE = predict(stepWiseMdl_mt, XGPE);
+                                        pred_er_SNC = predict(stepWiseMdl_er, XSNC);
+                                        pred_er_STN = predict(stepWiseMdl_er, XSTN);
+                                        pred_er_GPE = predict(stepWiseMdl_er, XGPE);
+                                        
+                                        
+                                        
+                                        figure;plot(pred_mt_SNC);
+                                        title('Predicted Calcium levels in SNC Mitochondria');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(pred_mt_STN);
+                                        title('Predicted Calcium levels in STN Mitochondria');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(pred_mt_GPE);
+                                        title('Predicted Calcium levels in GPE Mitochondria');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(pred_er_SNC);
+                                        title('Predicted Calcium levels in SNC Endoplasmic Reticulum');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(pred_er_STN);
+                                        title('Predicted Calcium levels in STN Endoplasmic Reticulum');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(pred_er_GPE);
+                                        title('Predicted Calcium levels in GPE Endoplasmic Reticulum');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        
+                                        
+                                            
                                         %%%ridge fit%%%
                                         X1 = [w VtrajectorySNC(:,1)];
                                         d = x2fx(X1,'interaction');
                                         d(:,1) = [];
                                         k = 0:1e-5:5e-3;
-                                        b = ridge(mt_catrajectorySNC(:,1),d,k);
+                                        b = ridge(er_catrajectorySNC(:,1),d,k);
                                         
 %                                         n = length(mt_catrajectorySNC(:,1));
 %                                         rng('default');
@@ -287,7 +330,7 @@ for i=1:numel(peren)
                                         
                                         
                                         x = table(w,VtrajectorySNC(:,1));
-                                        y = mt_catrajectorySNC(:,1);
+                                        y = er_catrajectorySNC(:,1);
                                         Mdl = fitrnet(x,y);
 
 
