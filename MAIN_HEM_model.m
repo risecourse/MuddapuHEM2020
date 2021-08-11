@@ -47,6 +47,24 @@ srnd = rng;
 sfcaiapop=1;
 k11f=0.1; % (muM*sec)-1
 
+% New Parameters & Initializations
+% TODO verify all parameters from Coutier et al 2009. Most parameters are
+% named similarly as Cloutier et al 2009 except without the GLC subscript
+
+GLCe_init = 0.47;
+GLCe_next = GLCe_init;
+GLCc_current = 4.64; % double check; assume constant capillary GLC concentration
+GLCn_next = 1; % look up
+
+Kce_T = 8.45; % affinity constant for capillaries <-> extracellular
+Ken_T = 1; % lookup; affinity constant for extra <-> neurons
+Km = 1; % look up
+kn_hk = 1; % look up
+R_ne = 1; % look up
+Ven_max = 1; % look up
+Vce_max = 0.0496; % look up
+
+
 %%
 % Energy deficit conditions
 % nATP=ones(8,8);
@@ -121,6 +139,16 @@ mt_catrajectorySNC = zeros(Ttime, 8);
 % Vstn = -62.5.*ones(Mstn,Nstn);
 % Ustn = zeros(size(Vstn));
 % Vstns=Vstn;Ustns=Ustn;
+
+% GLC trajectories:
+
+% if you do change, do search and replace  = search for "randi([1 8],1),randi([1 8],1)", replace with "NOI_row,NOI_col"
+numcells2record = 1;
+NOI_row=randi([1 8],numcells2record,1);
+NOI_col=randi([1 8],numcells2record,1);
+
+GLCe_trajectory = ones(Ttime, numcells2record)*GLCe_next;
+GLCn_trajectory = ones(Ttime, numcells2record)*GLCn_next;
 
 %GPe
 Vgpe = -53.67.*(rand(Mgpe,Ngpe)-0.5.*ones(Mgpe,Ngpe));
@@ -883,7 +911,30 @@ for k = 1:Ttime
     eta_ldh=1-beta_ldh_ros.*((ROS^4)./((ROS^4)+(Kldh_ros^4)));
     V_ldh = 1.*eta_ldh.*(kf_ldh.*PYR-kr_ldh.*LAC);
     V_lac = Vlac_0.*(1.00000+v_stim1.*K_lac)-K_lac_eff.*LAC;
+
+    GLCe = GLCe_next;
+    GLCn = GLCn_next;
     
+    v_en = Ven_max * ((GLCe/(GLCe + Ken_T)) - (GLCn/(GLCn + Kce_T)));
+    
+    v_ce = Vce_max * ((GLCc_current/(GLCc_current + Kce_T)) - (GLCe/(GLCe + Kce_T)));
+
+    fG6Pn = 1/(1 + exp(-20*(t-.6)));  % .6 is an event time, but what event, TODO. Note: SS value of fG6Pn = 0.75
+    vn_hk = kn_hk * ATP * (GLCn/(GLCn + Km))*(1 - fG6Pn); 
+    
+    changeGLCe = v_ce - R_ne*v_en; % ignoring astro
+    changeGCLn = v_en - vn_hk;  % why R_ne*v_en leaving extra fluid for neuron but v_en entering neuron from fluid TODO
+    
+    GLCe_next = GLCe + changeGLCe*dt; % TODO: the GLCe variable will be used in the equation for v_hk in the Muddapu code
+    GLCn_next = GLCn + changeGCLn*dt;
+    GLCe_trajectory(k, :) = GLCe(NOI_row,NOI_col);
+    GLCn_trajectory(k, :) = GLCn(NOI_row,NOI_col);
+    
+    % TODO would it be more direct to use GLCn in these equations, or would
+    % it be duplicating calculations that are already present in the
+    % equation below, if it is meant to convert an external concentration
+    % into the corresponding internal concentration and then calculate the
+    % effect on V_hk.
     V_hk = Vmax_hk.*(ATP./(ATP+Km_ATP_hk)).*(power(1.00000+power(F6P./KI_F6P, 4.00000), -1.00000)).*GLCe;
     AMP_pfk2 = (power(AMP./Kamp_pfk2, nh_amp))./(1.00000+power(AMP./Kamp_pfk2, nh_amp));
     V_pfk2 = Vmaxf_pfk2.*(ATP./(ATP+Km_ATP_pfk2)).*(F6P./(F6P+Km_F6P_pfk2)).*AMP_pfk2-Vmaxr_pfk2.*(F26P./(F26P+Km_F26P_pfk2));
