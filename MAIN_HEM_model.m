@@ -1,5 +1,5 @@
 %% Hybrid network model of excitotoxicity
-function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
+function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC, GLCe, GLCe_trajectory, GLCe_next]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
 %% CREDITS
 % Created by
 % Vignayanandam R. Muddapu (Ph.D. scholar)
@@ -52,16 +52,17 @@ k11f=0.1; % (muM*sec)-1
 % named similarly as Cloutier et al 2009 except without the GLC subscript
 
 GLCe_init = 0.47;
+%GLCe = ones(Ttime, 8) * 0.47;
 GLCe_next = GLCe_init;
 GLCc_current = 4.64; % double check; assume constant capillary GLC concentration
-GLCn_next = 1; % look up
+GLCn_next = 0.43; % look up
 
 Kce_T = 8.45; % affinity constant for capillaries <-> extracellular
-Ken_T = 1; % lookup; affinity constant for extra <-> neurons
-Km = 1; % look up
+Ken_T = 5.32; % lookup; affinity constant for extra <-> neurons
+Km = 0.105; % look up
 kn_hk = 1; % look up
-R_ne = 1; % look up
-Ven_max = 1; % look up
+R_ne = 4/9; % look up
+Ven_max = 0.504; % look up
 Vce_max = 0.0496; % look up
 
 
@@ -143,7 +144,7 @@ mt_catrajectorySNC = zeros(Ttime, 8);
 % GLC trajectories:
 
 % if you do change, do search and replace  = search for "randi([1 8],1),randi([1 8],1)", replace with "NOI_row,NOI_col"
-numcells2record = 1;
+numcells2record = 8;
 NOI_row=randi([1 8],numcells2record,1);
 NOI_col=randi([1 8],numcells2record,1);
 
@@ -423,7 +424,9 @@ PTP_mit=1;
 
 % Energy Metabolism
 % GLCe=ones(Ttime);%mM
-GLCe = .47;
+%GLCe = .47;
+
+t = 0.75;
 Vmax_hk = 2.5/1000;%mM/ms
 Km_ATP_hk = 0.5;%mM
 KI_F6P = 0.068;%mM
@@ -604,6 +607,7 @@ asb=1;
 indsappp=[];
 lims=0.2;
 k2=1;
+%GLCe = ones(Ttime, 8) * 0.47;
 %%
 for k = 1:Ttime
     
@@ -927,8 +931,10 @@ for k = 1:Ttime
     
     GLCe_next = GLCe + changeGLCe*dt; % TODO: the GLCe variable will be used in the equation for v_hk in the Muddapu code
     GLCn_next = GLCn + changeGCLn*dt;
-    GLCe_trajectory(k, :) = GLCe(NOI_row,NOI_col);
-    GLCn_trajectory(k, :) = GLCn(NOI_row,NOI_col);
+    %GLCe_trajectory(k, :) = GLCe(NOI_row,NOI_col);
+    GLCe_trajectory(k, :) = GLCe(1, :);
+    %GLCn_trajectory(k, :) = GLCn(NOI_row,NOI_col);
+    GLCn_trajectory(k, :) = GLCn(1, :);
     
     % TODO would it be more direct to use GLCn in these equations, or would
     % it be duplicating calculations that are already present in the
