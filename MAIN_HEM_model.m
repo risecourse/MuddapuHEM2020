@@ -52,16 +52,17 @@ k11f=0.1; % (muM*sec)-1
 % named similarly as Cloutier et al 2009 except without the GLC subscript
 
 GLCe_init = 0.47;
+%GLCe = ones(Ttime, 8) * 0.47;
 GLCe_next = GLCe_init;
 GLCc_current = 4.64; % double check; assume constant capillary GLC concentration
-GLCn_next = 1; % look up
+GLCn_next = 0.43; % look up
 
 Kce_T = 8.45; % affinity constant for capillaries <-> extracellular
-Ken_T = 1; % lookup; affinity constant for extra <-> neurons
-Km = 1; % look up
+Ken_T = 5.32; % lookup; affinity constant for extra <-> neurons
+Km = 0.105; % look up
 kn_hk = 1; % look up
-R_ne = 1; % look up
-Ven_max = 1; % look up
+R_ne = 4/9; % look up
+Ven_max = 0.504; % look up
 Vce_max = 0.0496; % look up
 
 
@@ -423,7 +424,9 @@ PTP_mit=1;
 
 % Energy Metabolism
 % GLCe=ones(Ttime);%mM
-GLCe = .47;
+%GLCe = .47;
+
+t = 0.75;
 Vmax_hk = 2.5/1000;%mM/ms
 Km_ATP_hk = 0.5;%mM
 KI_F6P = 0.068;%mM
@@ -604,6 +607,7 @@ asb=1;
 indsappp=[];
 lims=0.2;
 k2=1;
+%GLCe = ones(Ttime, 8) * 0.47;
 %%
 for k = 1:Ttime
     
@@ -927,6 +931,7 @@ for k = 1:Ttime
     
     GLCe_next = GLCe + changeGLCe*dt; % TODO: the GLCe variable will be used in the equation for v_hk in the Muddapu code
     GLCn_next = GLCn + changeGCLn*dt;
+
     GLCe_trajectory(k, :) = GLCe(1,:);
     GLCn_trajectory(k, :) = GLCn(1,:);
     
