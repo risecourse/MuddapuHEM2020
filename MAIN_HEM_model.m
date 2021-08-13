@@ -1,5 +1,5 @@
 %% Hybrid network model of excitotoxicity
-function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC, GLCe, GLCe_trajectory, GLCe_next]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
+function [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC,GLCe,GLCn,GLCn_trajectory,GLCe_trajectory]=MAIN_HEM_model(dt,durr,peren,wstsn,scfa,apopthr,camtthr,cl,gion,gi_dose,dron,dr_dose,ccbon,ccb_dose,cbdon,cbd_dose,asbon,asb_dose,gpuon)
 %% CREDITS
 % Created by
 % Vignayanandam R. Muddapu (Ph.D. scholar)
@@ -923,7 +923,7 @@ for k = 1:Ttime
     
     v_ce = Vce_max * ((GLCc_current/(GLCc_current + Kce_T)) - (GLCe/(GLCe + Kce_T)));
 
-    fG6Pn = 1/(1 + exp(-20*(t-.6)));  % .6 is an event time, but what event, TODO. Note: SS value of fG6Pn = 0.75
+    fG6Pn = 1/(1 + exp(-20*(durr-.6)));  % .6 is an event time, but what event, TODO. Note: SS value of fG6Pn = 0.75
     vn_hk = kn_hk * ATP * (GLCn/(GLCn + Km))*(1 - fG6Pn); 
     
     changeGLCe = v_ce - R_ne*v_en; % ignoring astro
@@ -931,10 +931,9 @@ for k = 1:Ttime
     
     GLCe_next = GLCe + changeGLCe*dt; % TODO: the GLCe variable will be used in the equation for v_hk in the Muddapu code
     GLCn_next = GLCn + changeGCLn*dt;
-    %GLCe_trajectory(k, :) = GLCe(NOI_row,NOI_col);
-    GLCe_trajectory(k, :) = GLCe(1, :);
-    %GLCn_trajectory(k, :) = GLCn(NOI_row,NOI_col);
-    GLCn_trajectory(k, :) = GLCn(1, :);
+
+    GLCe_trajectory(k, :) = GLCe(1,:);
+    GLCn_trajectory(k, :) = GLCn(1,:);
     
     % TODO would it be more direct to use GLCn in these equations, or would
     % it be duplicating calculations that are already present in the

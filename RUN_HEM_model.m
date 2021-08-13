@@ -115,7 +115,8 @@ for i=1:numel(peren)
 
                                         
                                         %disp(filename)
-                                        [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC, GLCe, GLCe_trajectory, GLCe_next]=MAIN_HEM_model(dt,dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
+                                        [deda,dDA,kid,simtime,srnd,VtrajectorySTN,VtrajectoryGPE,VtrajectorySNC,Ca_trajectorySNC,mCatrajectorySNC,Ttime,Nstn,erCatrajectorySNC,Ca_er,Ca_mt,er_catrajectorySNC,mt_catrajectorySNC,GLCe,GLCn,GLCn_trajectory,GLCe_trajectory]=MAIN_HEM_model(dt,dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gion,gi_dose(n4),dron,dr_dose(n3),ccbon,ccb_dose(n2),cbdon,cbd_dose(n1),asbon,asb_dose(n),gpuon);
+
                                         %                         [out_cell,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_cell(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
                                         %                         [deda,dDA,kid,clp,simtime,srnd]=IS_bSNc_iSTN_GPe_gpu_long_CL_pattern(dur,peren(i),wstsn(j),scfa,Aapopthr(k),camtthr(l),cl(m),gi_dose(n),gpuon);
                                         parsave_CL(filename,deda,dDA,kid,simtime,srnd,params);
@@ -261,23 +262,26 @@ for i=1:numel(peren)
                                         stressDataLinear_er = table(er_catrajectorySNC(:,1),w,VtrajectorySNC(:,1));
                                         
                                         %x = [w,Var3];
+                                        a = [w mt_catrajectorySNC(:,1) + ones(size(mt_catrajectorySNC(:,1))) * 80];
 
                                         
 %                                         mdl = fitlm(stressDataLinear,'Var1~w+Var3');
                                         %%%quadratic regression%%%
-                                        stepWiseMdl_mt = fitlm([w VtrajectorySNC(:,1)],mt_catrajectorySNC(:,1),'quadratic');
-                                        stepWiseMdl_er = fitlm([w VtrajectorySNC(:,1)],er_catrajectorySNC(:,1),'interactions');
+%                                         stepWiseMdl_mt = fitlm([w VtrajectorySNC(:,1)],mt_catrajectorySNC(:,1),'quadratic');
+%                                         stepWiseMdl_er = fitlm([w VtrajectorySNC(:,1)],er_catrajectorySNC(:,1),'linear');
+                                        Mdl_mt = fitrensemble([w VtrajectorySNC(:,1)],mt_catrajectorySNC(:,1));
+                                        Mdl_er = fitrensemble([w VtrajectorySNC(:,1)],er_catrajectorySNC(:,1));
                                         %%%stepwise predicitons%%%
                                         XSNC = [w VtrajectorySNC(:,1)];
                                         XSTN = [w VtrajectorySTN(:,1)];
                                         XGPE = [w VtrajectoryGPE(:,1)];
                                         
-                                        pred_mt_SNC = predict(stepWiseMdl_mt, XSNC);
-                                        pred_mt_STN = predict(stepWiseMdl_mt, XSTN);
-                                        pred_mt_GPE = predict(stepWiseMdl_mt, XGPE);
-                                        pred_er_SNC = predict(stepWiseMdl_er, XSNC);
-                                        pred_er_STN = predict(stepWiseMdl_er, XSTN);
-                                        pred_er_GPE = predict(stepWiseMdl_er, XGPE);
+                                        pred_mt_SNC = predict(Mdl_mt, XSNC);
+                                        pred_mt_STN = predict(Mdl_mt, XSTN);
+                                        pred_mt_GPE = predict(Mdl_mt, XGPE);
+                                        pred_er_SNC = (predict(Mdl_er, XSNC));
+                                        pred_er_STN = predict(Mdl_er, XSTN);
+                                        pred_er_GPE = predict(Mdl_er, XGPE);
                                         
                                         
                                         
@@ -303,6 +307,14 @@ for i=1:numel(peren)
                                         ylabel('Ca2+ Concentration (mM)');
                                         figure;plot(pred_er_GPE);
                                         title('Predicted Calcium levels in GPE Endoplasmic Reticulum');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(mt_catrajectorySNC);
+                                        title('Actual Calcium levels in SNC Mitochondria');
+                                        xlabel('Time (ms)');
+                                        ylabel('Ca2+ Concentration (mM)');
+                                        figure;plot(er_catrajectorySNC);
+                                        title('Actual Calcium levels in SNC Endroplasmic Reticulum');
                                         xlabel('Time (ms)');
                                         ylabel('Ca2+ Concentration (mM)');
                                         
